@@ -47,59 +47,39 @@ opener = urllib.request.build_opener()
 useragent = "Mozilla/5.0 (Linux; Android 9; SM-G960F Build/PPR1.180610.011; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/74.0.3729.157 Mobile Safari/537.36"
 opener.addheaders = [("User-agent", useragent)]
 
-
-def ParseSauce(googleurl):
-    """Parse/Scrape the HTML code for the info we want."""
-
-    source = opener.open(googleurl).read()
-    soup = BeautifulSoup(source, "html.parser")
-
-    results = {"similar_images": "", "best_guess": ""}
-
-    try:
-        for similar_image in soup.findAll("input", {"class": "gLFyf"}):
-            url = "https://www.google.com/search?tbm=isch&q=" + urllib.parse.quote_plus(
-                similar_image.get("value")
-            )
-            results["similar_images"] = url
-    except BaseException:
-        pass
-
-    for best_guess in soup.findAll("div", attrs={"class": "r5a77d"}):
-        results["best_guess"] = best_guess.get_text()
-
-    return results
-
-
-def get_data(img):
-    searchUrl = "https://www.google.com/searchbyimage/upload"
-    file_img = {"encoded_image": (img, open(img, "rb")), "image_content": ""}
-    response = requests.post(searchUrl, files=file_img, allow_redirects=False)
-    if os.path.exists(img):
-        os.remove(img)
-    if response.status_code == 400:
-        return
-    return response.headers["Location"]
-
-
-@waifu.add_handler(
-    MessageHandler(
-        filters.user(BOT_LIST), filters.group & ~filters.edited & ~filters.forwarded
-    )
-)
-async def autoprotecc(_, message):
-    if message.photo:
-        if "add" in message.caption.lower():
-            img = await message.download()
-            fetchUrl = await get_data(img)
-            match = await ParseSauce(fetchUrl + "&preferences?hl=en&fg=1#languages")
-            guess = match["best_guess"]
-            if not guess:
-                return await message.reply_text("Failed to protecc this waifu.")
-            guess = guess.replace("Results for", "")
-            await time.sleep(DELAY)
-            kek = await message.reply_text(f"/protecc {guess}")
-            await kek.delete()
-
+@waifu.on_message(filters.regex(pattern="You've been offered a waifu trade!"))
+async def trade(ub, message):
+    await asyncio.sleep(30)
+    await message.delete()
+    
+@waifu.on_message(filters.regex(pattern="rip, the waifu has run away already..."))
+async def ran(ub, message):
+    await asyncio.sleep(4)
+    async for m in ub.search_messages(message.chat.id, query='A qt waifu appeared!', limit=1):
+        await m.delete()
+    await asyncio.sleep(20)
+    await message.delete()
+    
+@waifu.on_message(filters.regex(pattern="rip, that's not quite right..."))
+async def rip(ub, message):
+    await asyncio.sleep(3)
+    await message.delete()
+    
+@waifu.on_message(filters.regex(pattern="OwO you protecc'd"))
+async def done(ub, message):
+    await asyncio.sleep(4)
+    async for m in ub.search_messages(message.chat.id, query='A qt waifu appeared!', limit=1):
+        await m.delete()
+    await asyncio.sleep(6)
+    await message.delete()
+    
+@waifu.on_message(filters.regex(pattern="Top harems in"))
+async def top(ub, message):
+    await asyncio.sleep(60)
+    await message.delete()
+@waifu.on_message(filters.regex(pattern="kek that doesn't look right. Reply to someone like this:"))
+async def rip(ub, message):
+    await asyncio.sleep(3)
+    await message.delete()
 
 waifu.start()
